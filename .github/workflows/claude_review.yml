@@ -1,40 +1,15 @@
-name: Claude Code Review
-
+name: Claude Code
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]  # PR 作成・更新時に実行
-
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
 jobs:
-  review:
+  claude:
     runs-on: ubuntu-latest
-
     steps:
-    # 1. リポジトリをチェックアウト
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
-    # 2. Python をセットアップ
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
 
-    # 3. 依存ライブラリをインストール（Anthropic SDK）
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install anthropic PyGithub
-
-    # 4. 差分を取得してファイルに保存
-    - name: Get code diff
-      run: |
-        git fetch origin ${{ github.base_ref }}
-        git diff origin/${{ github.base_ref }} > diff.txt
-
-    # 5. Claude API を呼び出してレビューを生成
-    - name: Generate review with Claude
-      env:
-        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        python scripts/claude_review.py
